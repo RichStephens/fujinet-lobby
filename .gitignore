@@ -58,10 +58,6 @@ dkms.conf
 
 .vscode/
 
-# apple tools for generating po files etc
-apple-tools/*.jar
-apple-tools/*.dsk
-
 # build artifacts
 build/
 dist/
@@ -74,8 +70,8 @@ AppleWin.log
 
 Makefile.options
 .DS_Store
-weather/adam/weather_BOOTSTRAP.bin
-weather/adam/weather.ddp
-test/adam/.clang-format
-weather/_libs/
+
 **/_libs/
+
+db/*
+lobbyPersist
