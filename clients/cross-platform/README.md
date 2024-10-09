@@ -1,12 +1,6 @@
-# fujinet-lobby
-The canonical set of Lobby clients and Lobby server for the FujiNet Game System
-
-This repo was created in October 2024 and combines both the Lobby Go server from the 'servers' repo and the client code from the 'fujinet-apps' repo. It is hoped that by combinging them into one common repo it will allow faster and easier code contributions for the FujiNet Game System.
-
-
-
-
 # lobby
+
+NOTE - This is a WIP cross-platform version of the Lobby. It does not yet contain chat functionality.
 
 The FujiNet Game Lobby/Game board client.
 
@@ -21,6 +15,4 @@ The client will read the **AppKey**, connect to the server, and start the game.
 
 ## Lobby Server
 Details about implementing a game server or client and working with the Lobby Server can be viewed at https://github.com/FujiNetWIFI/servers/tree/main/lobby.
-
-
 
