@@ -2,7 +2,11 @@
 
 CMOC_SRC := ~/Documents/projects/cmoc-0.1.88/src
 
-TARGET_EXEC ?= lobby
+PACKAGE = lobby
+VERSION = 1.0.0
+TARGET = coco
+
+TARGET_EXEC ?= $(PACKAGE)
 
 BUILD_DIR ?= ./build
 SRC_DIRS ?= ./src
@@ -10,41 +14,30 @@ SRC_DIRS ?= ./src
 CC=cmoc
 ASM=lwasm
 
-#SRCS := $(shell find $(SRC_DIRS) -name *.c) $(shell find $(SRC_DIRS)/coco -name *.s) 
 SRCS := $(shell ls $(SRC_DIRS)/*.c) $(shell find $(SRC_DIRS)/coco -name *.c)
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
 # Required libraries.
 
-# BControl is only used by the OS-9 version.
-BCONTROL_LIB = bcontrol
-BCONTROL_LIB_DIR = ../../../bcontrol
-FUJINET_LIB_DIR = _libs/4.6.1-coco
-FUJINET_LIB = fujinet-coco-4.6.1.lib
+# this downloads fujinet-lib and populates FUJINET_LIB_VERSION_DIR and FUJINET_LIB_NAME
+include fujinet-lib.mk
 
 LIBS = \
-	-L$(FUJINET_LIB_DIR) -l:$(FUJINET_LIB) 
-#	-L $(BCONTROL_LIB_DIR) -l$(BCONTROL_LIB) \
-
-PACKAGE = lobby
-VERSION = 0.1.00
-TARGET = coco
-
+	-L$(FUJINET_LIB_VERSION_DIR) -l:$(FUJINET_LIB_NAME) 
 
 CFLAGS= \
 			-I $(CMOC_SRC) \
 			-I src/include \
-			-I $(FUJINET_LIB_DIR) \
+			-I $(FUJINET_LIB_VERSION_DIR) \
 			--$(TARGET) \
+			--intermediate \
 			--intdir ./intermediates \
 			--stack-space=512 \
 			-fomit-frame-pointer \
 			-DNDEBUG \
 			-DVERSION=\"$(VERSION)\" \
-			-O2 -DDISABLE_SOUND
-# -DDISABLE_GRAPHICS
-#			-I $(BCONTROL_LIB_DIR) \
+			-O2
 #			--check-null \
 #			-D_CMOC_CHECK_STACK_OVERFLOW_ --check-stack\
 
@@ -52,6 +45,7 @@ CFLAGS= \
 LDFLAGS= 			--$(TARGET) \
 	-o$(TARGET_EXEC).bin \
 	-I $(CMOC_SRC) \
+	--intermediate
 
 
 LDFLAGS_TEST= 			--$(TARGET) \
@@ -60,21 +54,26 @@ LDFLAGS_TEST= 			--$(TARGET) \
 INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-
-$(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
+$(BUILD_DIR)/$(TARGET_EXEC): .get_fujinet_lib $(OBJS)
 	$(CC) $(LDFLAGS) $(OBJS) $(LIBS)
 	$(RM) $(TARGET_EXEC) $(TARGET_EXEC).dsk
 	
 	decb dskini $(TARGET_EXEC).dsk
-	decb copy -t -0 src/coco/autoexec.bas $(TARGET_EXEC).dsk,AUTOEXEC.BAS
+#	decb copy -t -0 src/coco/autoexec.bas $(TARGET_EXEC).dsk,AUTOEXEC.BAS
 	writecocofile $(TARGET_EXEC).dsk $(TARGET_EXEC).bin
 ifeq ($(OS),Windows_NT) 
 	@echo ........................................................................ & dir $(TARGET_EXEC).bin | find "$(TARGET_EXEC).bin" &echo ........................................................................
 else
 	@echo ........................................................................ ;ls -l $(TARGET_EXEC).bin;echo ........................................................................
 endif
-#	cd ~/mame_coco;mame coco3 -window -natural -autoboot_delay 1 -autoboot_command "run\"autoexec\n" -flop1 $(CURDIR)/$(TARGET_EXEC).dsk
-	cd ~/mame_coco;mame coco -window -natural -autoboot_delay 2 -autoboot_command "run\"autoexec\n" -flop1 $(CURDIR)/$(TARGET_EXEC).dsk
+
+# Copy to local SD drive for fast testing
+	cp $(CURDIR)/$(TARGET_EXEC).dsk ~/Documents/fujinetpc-coco/SD/$(DSK)
+	cp $(CURDIR)/$(TARGET_EXEC).dsk ~/Documents/projects/fujinet-firmware/build/dist/SD/$(DSK)
+
+	-killall -q wine64-preloader;cd ~/mame_coco;mame coco3 -window -nomaximize -resolution 1024x768  -natural
+#	-killall -q wine64-preloader;cd ~/mame_coco;mame coco3 -window -nomaximize -resolution 1024x768  -natural -autoboot_delay 1 -autoboot_command "runm\"lobby\n"
+#	-killall -q wine64-preloader;cd ~/mame_coco;mame coco -debug -window -nomaximize -resolution 1024x768 -natural -autoboot_delay 2 -autoboot_command "run\"lobby\n"
 
 # c source
 $(BUILD_DIR)/%.c.o: %.c

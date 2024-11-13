@@ -35,6 +35,7 @@
 #define FUJI_DEVICE_SLOT_COUNT 8
 #define BOTTOM_PANEL_Y (screen_height-BOTTOM_PANEL_ROWS)
 #define BOTTOM_PANEL_LEN SCREEN_WIDTH*BOTTOM_PANEL_ROWS
+#define MOUNTING "Mounting"
 
 HostSlot host_slots[FUJI_HOST_SLOT_COUNT];
 DeviceSlot device_slots[FUJI_DEVICE_SLOT_COUNT];
@@ -66,6 +67,8 @@ char panel_spacer_string[] = {0xA4,0xE4,0xE4,0xB4,0xB4,0xE4,0xE4,0xA4,0};
 #define PANEL_SPACER panel_spacer_string
 #undef BOTTOM_PANEL_ROWS
 #define BOTTOM_PANEL_ROWS 2
+#undef MOUNTING
+#define MOUNTING "LOADING"
 
 #endif
 
@@ -110,7 +113,7 @@ typedef struct { // 189 bytes
   uint8_t online;         
   uint8_t players;     
   uint8_t max_players; 
-  uint16_t ping_age;   
+  uint16_t ping_age;  // Ignored in client. Also, would need to support different endians in server for binary transfer mode
 } ServerDetails;
 
 typedef struct {
@@ -235,40 +238,13 @@ void refresh_servers(bool clearScreen) {
   cclearxy(0,BOTTOM_PANEL_Y,BOTTOM_PANEL_LEN);
   cputsxy(SCREEN_WIDTH/2-12,BOTTOM_PANEL_Y+1,"Refreshing Server List..");
 
-  strcpy(buf, LOBBY_ENDPOINT "?bin=1&platform=" PLATFORM "&pagesize=" PAGE_SIZE_STR "&page=");
+  strcpy(buf, LOBBY_ENDPOINT "?bin=1&platform=" PLATFORM  "&pagesize=" PAGE_SIZE_STR "&page=");
   itoa(page, buf+strlen(buf), 10);
 
-  #ifndef _CMOC_VERSION_ // remove ifndef to enable fujinet-lib in coco
   network_open(buf, OPEN_MODE_HTTP_GET, OPEN_TRANS_NONE);
   api_read_result = network_read(buf, (uint8_t*)&lobby, sizeof(lobby));
   network_close(buf);
-  #else
-  // mock result for coco - to test UI
-  api_read_result = 321;
-  lobby.server_count = 6;
-  lobby.current_page=0;
-  for (i=0;i<3;i++) {
-    lobby.servers[i].online=1;
-    lobby.servers[i].game_type=1;
-    strcpy(lobby.servers[i].game, "5 card Stud");
-    sprintf(lobby.servers[i].server,"Bot Table %d", i+1);
-    strcpy(lobby.servers[i].client_url,"ec.tnfs.io/coco/fcs.dsk");
-    lobby.servers[i].players=0;
-    lobby.servers[i].max_players=4;
-  }
-
-  for (i=3;i<6;i++) {
-    lobby.servers[i].online=1;
-    lobby.servers[i].game_type=2;
-    strcpy(lobby.servers[i].game, "Fujitzee");
-    sprintf(lobby.servers[i].server,"AI game %d", i-2);
-    strcpy(lobby.servers[i].client_url,"ec.tnfs.io/coco/fujitzee.dsk");
-    lobby.servers[i].players=0;
-    lobby.servers[i].max_players=6;
-  }
-  #endif
-
-
+  
   if (clearScreen)
     banner();
 
@@ -324,6 +300,7 @@ void register_user(void) {
 }
 
 
+
 /**
  * @brief Mount the selected server's client and reboot
 */
@@ -350,15 +327,15 @@ void mount() {
   }
   cclearxy(0,BOTTOM_PANEL_Y,BOTTOM_PANEL_LEN);
 
-  cputsxy(0,BOTTOM_PANEL_Y, "Mounting\r\n");
+  cputsxy(0,BOTTOM_PANEL_Y, MOUNTING "\r\n");
   cputs(client_path);
 
-  // // Get the host and filename
+  // Get the host and filename
   if (filename = strstr(client_path,"/")) {
     filename+=1;
   }
 
-  // // Get the host
+  // Get the host
   host = strtok(client_path,"/");
 
   if (filename == NULL || host == NULL) {
@@ -371,7 +348,7 @@ void mount() {
 
   // Read current list of hosts from FujiNet
   fuji_get_host_slots((unsigned char*) host_slots, FUJI_HOST_SLOT_COUNT);
-
+  
   // Pick the host slot to use. Default to the last, but choose an existing slot
   // if it already has the same host
   slot = FUJI_HOST_SLOT_COUNT;
@@ -388,6 +365,7 @@ void mount() {
     strcpy((char*)host_slots[slot], host);
     fuji_put_host_slots((unsigned char*) host_slots, FUJI_HOST_SLOT_COUNT);
   }
+  
 
   // Mount the file to the device/host slot
   fuji_mount_host_slot(slot);
@@ -400,10 +378,12 @@ void mount() {
   fuji_set_device_filename(0, slot, 0, filename);
   fuji_mount_disk_image(0, 1);
 
-  // // Set the server url in this game type's app key:
+  // Set the server url in this game type's app key:
   write_appkey(CREATOR_ID,APP_ID,lobby.servers[selected_server].game_type, strlen(lobby.servers[selected_server].url), lobby.servers[selected_server].url);  
   
+  // Reboot / run the game
   reboot();
+
 }
 
 void change_selection(int8_t delta) {
