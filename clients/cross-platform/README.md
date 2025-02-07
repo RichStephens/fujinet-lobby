@@ -4,7 +4,7 @@ This is a cross-platform version of the Lobby Client, utilizing [FujiNet-Lib](ht
 
 The goal of the [FujiNet Lobby](http://fujinet.online:8080/) is to make it easy to find and play online games that span multiple platforms.
 
-The Lobby Client can be booted directly from config and displays a real time list of online game servers.
+The Lobby can be started directly from config by pressing **`L`** and displays a real time list of online game servers.
 
 ## Supported Systems
 * Atari 

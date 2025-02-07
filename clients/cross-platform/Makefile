@@ -12,8 +12,8 @@
  
 # Space or comma separated list of cc65 supported target platforms to build for.
 
-# Supported targets: atari apple2 c64 (lowercase!)
-TARGETS := apple2
+# Supported targets: atari apple2 c64 (lowercase!) 7614
+TARGETS := atari
  
 # Name of the final, single-file executable.
 # Default: name of the current dir with target name appended
@@ -61,7 +61,7 @@ ASFLAGS =
 # Additional linker flags and options.
 # Default: none
 # LDFLAGS =   -C apple2-hgr.cfg  -D __STACKSIZE__=0x0200 -D __HIMEM__=0xBF00 isn't working
-LDFLAGS = -m $(PROGRAM_STUB).map -Ln $(PROGRAM_STUB).lbl 
+LDFLAGS = -vm -m $(PROGRAM_STUB).map -Ln $(PROGRAM_STUB).lbl 
 
 # Path to the directory containing C and ASM sources.
 # Default: src

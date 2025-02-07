@@ -254,7 +254,7 @@ void refresh_servers(bool clearScreen) {
     cputs("\r\nCould not query Lobby!\r\nError: ");
     itoa(api_read_result, buf, 10);
     cputs(buf);
-  } else if (api_read_result < sizeof(ServerDetails) || lobby.server_count == 0 || lobby.server_count >= PAGE_SIZE) {
+  } else if (api_read_result < sizeof(ServerDetails) || lobby.server_count == 0 || lobby.server_count > PAGE_SIZE) {
     cputs("\r\nNo servers are online.");
     lobby.server_count = 0;
   } else {
@@ -278,7 +278,7 @@ void get_username() {
   while (1) {
     inputField(1,5,8,username);
     if (strlen(username)>=2 && strlen(username)<=8)
-      return;
+      break;
   }
 
   write_appkey(CREATOR_ID,APP_ID,KEY_ID,strlen(username), username);  
