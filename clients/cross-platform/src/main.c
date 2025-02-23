@@ -241,7 +241,7 @@ void refresh_servers(bool clearScreen) {
   strcpy(buf, LOBBY_ENDPOINT "?bin=1&platform=" PLATFORM  "&pagesize=" PAGE_SIZE_STR "&page=");
   itoa(page, buf+strlen(buf), 10);
 
-  network_open(buf, OPEN_MODE_HTTP_GET, OPEN_TRANS_NONE);
+  network_open(buf, OPEN_MODE_HTTP_GET_H, OPEN_TRANS_NONE);
   api_read_result = network_read(buf, (uint8_t*)&lobby, sizeof(lobby));
   network_close(buf);
   
