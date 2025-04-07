@@ -34,7 +34,7 @@ var (
 	SCHEDULER         *tasks.Scheduler
 	TIME              uint64
 	STARTEDON         time.Time
-	EVTSERVER_WEBHOOK string
+	EVTSERVER_WEBHOOK []string
 )
 
 const (
@@ -193,7 +193,6 @@ func init_html(srvaddr string) {
 // check the url submited via command line is a valid webhook
 func init_webhook(evtaddr string) {
 	if len(evtaddr) == 0 {
-		EVTSERVER_WEBHOOK = ""
 		return
 	}
 
@@ -210,6 +209,6 @@ func init_webhook(evtaddr string) {
 	}
 
 	INFO.Printf("%s will be used as eventserver webhook", evtaddr)
-	EVTSERVER_WEBHOOK = evtaddr
+	EVTSERVER_WEBHOOK = append(EVTSERVER_WEBHOOK, evtaddr)
 
 }

@@ -314,23 +314,27 @@ func CallEventWebHook(method string, ServerData any, time time.Duration) error {
 		return err
 	}
 
-	req, err := http.NewRequest(method, EVTSERVER_WEBHOOK, bytes.NewBuffer(json))
+	for _, uri_webhook := range EVTSERVER_WEBHOOK {
 
-	if err != nil {
-		ERROR.Printf("Unable to create http.NewRequest for event webhook")
-		return err
+		req, err := http.NewRequest(method, uri_webhook, bytes.NewBuffer(json))
+
+		if err != nil {
+			ERROR.Printf("Unable to create http.NewRequest for event webhook")
+			return err
+		}
+		req.Header.Set("X-Lobby-Client", VERSION)
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{Timeout: time}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			ERROR.Printf("Unable to post event to webhook: %s", uri_webhook)
+			return err
+		}
+		defer resp.Body.Close()
+
 	}
-	req.Header.Set("X-Lobby-Client", VERSION)
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{Timeout: time}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		ERROR.Printf("Unable to post event to webhook: %s", EVTSERVER_WEBHOOK)
-		return err
-	}
-	defer resp.Body.Close()
 
 	return nil
 }
