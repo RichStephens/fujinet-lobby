@@ -20,7 +20,7 @@ On startup, enter your name (on first run), then pick from a list of available o
 The client will read the **AppKey**, connect to the server, and start the game.
 
 ## Lobby Server
-Details about implementing a game server or client and working with the Lobby Server can be viewed at https://github.com/FujiNetWIFI/servers/tree/main/lobby.
+Details about implementing a game server or client and working with the Lobby Server can be viewed at https://github.com/FujiNetWIFI/fujinet-lobby.
 
 
 
