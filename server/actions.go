@@ -13,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// send the game servers stored to the client minimised
+// send the game servers stored to the client minimised or binary format
 func ShowServersMinimised(c *gin.Context) {
 
 	form, err := parseShowServersMinimisedForm(c)
