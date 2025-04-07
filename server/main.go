@@ -30,11 +30,11 @@ var (
 )
 
 var (
-	DATABASE          *lobbyDB
-	SCHEDULER         *tasks.Scheduler
-	TIME              uint64
-	STARTEDON         time.Time
-	EVTSERVER_WEBHOOK []string
+	DATABASE           *lobbyDB
+	SCHEDULER          *tasks.Scheduler
+	TIME               uint64
+	STARTEDON          time.Time
+	EVTSERVER_WEBHOOKS []string
 )
 
 const (
@@ -50,11 +50,12 @@ var SERVERS_HTML []byte
 
 func main() {
 
-	var srvaddr, evtaddr string
+	var srvaddr string
+	var evtaddrs ArrayOfParams
 	var help, version bool
 
 	flag.StringVar(&srvaddr, "srvaddr", ":8080", "<address:port> for http server")
-	flag.StringVar(&evtaddr, "evtaddr", "", "<http> for event server webhook")
+	flag.Var(&evtaddrs, "evtaddr", "<http> for event server webhook (multiple values accepted)")
 
 	flag.BoolVar(&version, "version", false, "show current version")
 	flag.BoolVar(&help, "help", false, "show this help")
@@ -77,7 +78,7 @@ func main() {
 	init_time()
 	init_db()
 	init_html(srvaddr)
-	init_webhook(evtaddr)
+	init_webhook(evtaddrs)
 
 	router := gin.Default()
 
@@ -191,24 +192,28 @@ func init_html(srvaddr string) {
 }
 
 // check the url submited via command line is a valid webhook
-func init_webhook(evtaddr string) {
-	if len(evtaddr) == 0 {
+func init_webhook(evtaddrs ArrayOfParams) {
+	if len(evtaddrs) == 0 {
 		return
 	}
 
-	url, err := url.Parse(evtaddr)
-	if err != nil {
-		WARN.Printf("%s is not a valid url for the event server webhook. Eventserver won't be used", evtaddr)
-		return
+	for _, evtaddr := range evtaddrs {
+
+		url, err := url.Parse(evtaddr)
+		if err != nil {
+			WARN.Printf("%s is not a valid url for the event server webhook. Eventserver won't be used", evtaddr)
+			return
+		}
+
+		_, err = net.LookupIP(url.Host)
+
+		if err != nil {
+			WARN.Printf("%s cannot be resolved to an ip. Eventserver won't be used.", url.Host)
+		}
+
+		INFO.Printf("%s will be used as eventserver webhook", evtaddr)
+		EVTSERVER_WEBHOOKS = append(EVTSERVER_WEBHOOKS, evtaddr)
+
 	}
-
-	_, err = net.LookupIP(url.Host)
-
-	if err != nil {
-		WARN.Printf("%s cannot be resolved to an ip. Eventserver won't be used.", url.Host)
-	}
-
-	INFO.Printf("%s will be used as eventserver webhook", evtaddr)
-	EVTSERVER_WEBHOOK = append(EVTSERVER_WEBHOOK, evtaddr)
 
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"runtime"
@@ -127,4 +128,22 @@ func appendFixedLengthString(buf []byte, s string, maxLen int) []byte {
 		maxLen--
 	}
 	return buf
+}
+
+// provide support for multiple opsargs flags:
+//
+// ./lobbyPersist --evtaddr url1 --evtaddr url2
+// https://stackoverflow.com/a/28323276
+
+type ArrayOfParams []string
+
+// String is an implementation of the flag.Value interface
+func (i *ArrayOfParams) String() string {
+	return fmt.Sprintf("%v", *i)
+}
+
+// Set is an implementation of the flag.Value interface
+func (i *ArrayOfParams) Set(value string) error {
+	*i = append(*i, value)
+	return nil
 }

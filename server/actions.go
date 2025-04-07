@@ -238,7 +238,7 @@ func UpsertServer(c *gin.Context) {
 		return
 	}
 
-	if len(EVTSERVER_WEBHOOK) > 0 {
+	if len(EVTSERVER_WEBHOOKS) > 0 {
 		go CallEventWebHook("POST", server, 2*time.Second)
 	}
 
@@ -296,7 +296,7 @@ func DeleteServer(c *gin.Context) {
 		return
 	}
 
-	if len(EVTSERVER_WEBHOOK) > 0 {
+	if len(EVTSERVER_WEBHOOKS) > 0 {
 		go CallEventWebHook("DELETE", server, 2*time.Second)
 	}
 
@@ -314,7 +314,7 @@ func CallEventWebHook(method string, ServerData any, time time.Duration) error {
 		return err
 	}
 
-	for _, uri_webhook := range EVTSERVER_WEBHOOK {
+	for _, uri_webhook := range EVTSERVER_WEBHOOKS {
 
 		req, err := http.NewRequest(method, uri_webhook, bytes.NewBuffer(json))
 
