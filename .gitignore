@@ -74,5 +74,5 @@ Makefile.options
 **/_libs/
 
 db/*
-*.sqlite3
+*.sqlite3*
 lobbyPersist
