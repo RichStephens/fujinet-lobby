@@ -117,6 +117,8 @@ func IsValidURI(uri string) bool {
 
 // Returns a byte slice equal to the maxLen+1, padded with zeros
 // The extra byte is added to terminate the string
+// BUG: if len(s) > maxLen the function fails (it generates a []byte longer)
+// than maxLen+1 and doesn't add the \0x00 terminator
 func appendFixedLengthString(buf []byte, s string, maxLen int) []byte {
 	buf = append(buf, s...)
 	maxLen -= len(s)
