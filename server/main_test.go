@@ -80,7 +80,7 @@ var GameServersIn = []string{
 	`{
         "game": "Battleship",
         "appkey": 3,
-        "region": "apac",
+        "region": "AP",
         "server": "8bitBattleship.com",
         "serverurl": "https://8bitBattleship.com/battlehuman",
         "status": "online",
@@ -98,7 +98,7 @@ var GameServersIn = []string{
 	`{
         "game": "5 CARD STUD",
         "appkey": 3,
-        "region": "all",
+        "region": "AL",
         "server": "erichomeserver.com",
         "serverurl": "tcp://thomcorner.com/server5",
         "status": "offline",
@@ -114,7 +114,7 @@ var GameServersIn = []string{
 	`{
         "game": "5 CARD STUD",
         "appkey": 3,
-        "region": "vatican",
+        "region": "VA",
         "server": "thomcorner.com",
         "serverurl": "tcp://thomcorner.com/pokerhuman",
         "status": "online",
