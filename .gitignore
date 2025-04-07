@@ -48,7 +48,7 @@ fujinet-lib/
 *.pdb
 
 # Kernel Module Compile Results
-# *.mod* removed it because it breadks golang code
+# *.mod* removed it because it breaks golang code
 *.cmd
 .tmp_versions/
 modules.order
