@@ -315,7 +315,7 @@ func assertHTTPAnswerJSON(w *httptest.ResponseRecorder, HTTPCode int, HTTPBody s
 	// but SupersededMatch may accept some errors.
 	// TODO: use ExactMatch but doing a manual check for the ping time that will be different.
 	if ret == jsondiff.NoMatch {
-		err = append(err, fmt.Errorf(diff))
+		err = append(err, fmt.Errorf("%s", diff))
 	}
 
 	return err
