@@ -48,7 +48,7 @@ fujinet-lib/
 *.pdb
 
 # Kernel Module Compile Results
-*.mod*
+# *.mod* removed it because it breadks golang code
 *.cmd
 .tmp_versions/
 modules.order
@@ -74,4 +74,5 @@ Makefile.options
 **/_libs/
 
 db/*
+*.sqlite3
 lobbyPersist
