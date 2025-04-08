@@ -201,14 +201,15 @@ func init_webhook(evtaddrs ArrayOfParams) {
 
 		url, err := url.Parse(evtaddr)
 		if err != nil {
-			WARN.Printf("%s is not a valid url for the event server webhook. Eventserver won't be used", evtaddr)
+			WARN.Printf("%s is not a valid url for the event server webhook. This eventserver won't be used", evtaddr)
 			return
 		}
 
 		_, err = net.LookupIP(url.Host)
 
 		if err != nil {
-			WARN.Printf("%s cannot be resolved to an ip. Eventserver won't be used.", url.Host)
+			WARN.Printf("%s cannot be resolved to an ip. This eventserver won't be used.", url.Host)
+			return
 		}
 
 		INFO.Printf("%s will be used as eventserver webhook", evtaddr)
