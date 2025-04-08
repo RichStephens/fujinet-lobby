@@ -191,7 +191,7 @@ func init_html(srvaddr string) {
 	DOCHTML = bytes.ReplaceAll(DOCHTML, []byte("$$version$$"), []byte(VERSION))
 }
 
-// check the url submited via command line is a valid webhook
+// check the urls submited via command line are valid webhooks
 func init_webhook(evtaddrs ArrayOfParams) {
 	if len(evtaddrs) == 0 {
 		return
