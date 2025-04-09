@@ -308,6 +308,8 @@ func DeleteServer(c *gin.Context) {
 // supports updates (POST) and deletion (DELETE)
 func CallEventWebHook(method string, ServerData any, time time.Duration) error {
 
+	DEBUG.Printf("CallEventWebHook: %v", EVTSERVER_WEBHOOKS)
+
 	json, err := json.MarshalIndent(ServerData, "", "\t")
 	if err != nil {
 		ERROR.Printf("Unable to json.Marshal %v", ServerData)
@@ -315,12 +317,12 @@ func CallEventWebHook(method string, ServerData any, time time.Duration) error {
 	}
 
 	for _, uri_webhook := range EVTSERVER_WEBHOOKS {
-
+		DEBUG.Printf("Processing webhook: %s", uri_webhook)
 		req, err := http.NewRequest(method, uri_webhook, bytes.NewBuffer(json))
 
 		if err != nil {
-			ERROR.Printf("Unable to create http.NewRequest for event webhook")
-			return err
+			ERROR.Printf("Unable to create http.NewRequest for event webhook (%s)", err)
+			continue
 		}
 		req.Header.Set("X-Lobby-Client", VERSION)
 		req.Header.Set("Content-Type", "application/json")
@@ -329,8 +331,8 @@ func CallEventWebHook(method string, ServerData any, time time.Duration) error {
 
 		resp, err := client.Do(req)
 		if err != nil {
-			ERROR.Printf("Unable to post event to webhook: %s", uri_webhook)
-			return err
+			ERROR.Printf("Unable to post event to webhook: %s (%s)", uri_webhook, err)
+			continue
 		}
 		defer resp.Body.Close()
 
