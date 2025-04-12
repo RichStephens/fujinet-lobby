@@ -32,6 +32,10 @@ dbbackup:
 test:
 	go test 
 
+
+server-test:
+	wget -O- -H "http://localhost:8080/server" --header="Content-Type: application/json" --post-file=./test.json 
+
 help:
 	@printf "make (all)		-- create local database (if needed) and run the server\n\
 	 ·   install-db -- set up sqlite backend\n\

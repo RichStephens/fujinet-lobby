@@ -1,0 +1,14 @@
+{
+        "game": "Super Chess",
+        "server": "http://chess.rogersm.net",
+        "serverurl": "http://chess.rogersm.net/server",
+        "region": "eu",
+        "status": "online",
+        "appkey": 1,
+        "maxplayers": 2,
+        "curplayers": 1,
+        "clients": [
+            {"platform":"atari16", "url":"http://chess.rogersm.net/atarichess.xex" },
+            {"platform": "spectrum2+", "url":"http://chess.rogersm.net/speccychess.xex"}
+        ]
+    }

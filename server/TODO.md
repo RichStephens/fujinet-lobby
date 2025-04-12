@@ -6,3 +6,7 @@
 * Add https support to the server.
 * Simplify server even further using base go and removing gin framework.
 * Set up fail2ban (infra)
+
+
+# Binary packaging:
+https://medium.com/learning-the-go-programming-language/encoding-data-with-the-go-binary-package-42c7c0eb3e73

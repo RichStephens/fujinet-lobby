@@ -238,7 +238,7 @@ func UpsertServer(c *gin.Context) {
 		return
 	}
 
-	if len(EVTSERVER_WEBHOOK) > 0 {
+	if len(EVTSERVER_WEBHOOKS) > 0 {
 		go CallEventWebHook("POST", server, 2*time.Second)
 	}
 
@@ -296,7 +296,7 @@ func DeleteServer(c *gin.Context) {
 		return
 	}
 
-	if len(EVTSERVER_WEBHOOK) > 0 {
+	if len(EVTSERVER_WEBHOOKS) > 0 {
 		go CallEventWebHook("DELETE", server, 2*time.Second)
 	}
 
@@ -308,29 +308,35 @@ func DeleteServer(c *gin.Context) {
 // supports updates (POST) and deletion (DELETE)
 func CallEventWebHook(method string, ServerData any, time time.Duration) error {
 
+	DEBUG.Printf("CallEventWebHook: %v", EVTSERVER_WEBHOOKS)
+
 	json, err := json.MarshalIndent(ServerData, "", "\t")
 	if err != nil {
 		ERROR.Printf("Unable to json.Marshal %v", ServerData)
 		return err
 	}
 
-	req, err := http.NewRequest(method, EVTSERVER_WEBHOOK, bytes.NewBuffer(json))
+	for _, uri_webhook := range EVTSERVER_WEBHOOKS {
+		DEBUG.Printf("Processing webhook: %s", uri_webhook)
+		req, err := http.NewRequest(method, uri_webhook, bytes.NewBuffer(json))
 
-	if err != nil {
-		ERROR.Printf("Unable to create http.NewRequest for event webhook")
-		return err
+		if err != nil {
+			ERROR.Printf("Unable to create http.NewRequest for event webhook (%s)", err)
+			continue
+		}
+		req.Header.Set("X-Lobby-Client", VERSION)
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{Timeout: time}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			ERROR.Printf("Unable to post event to webhook: %s (%s)", uri_webhook, err)
+			continue
+		}
+		defer resp.Body.Close()
+
 	}
-	req.Header.Set("X-Lobby-Client", VERSION)
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{Timeout: time}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		ERROR.Printf("Unable to post event to webhook: %s", EVTSERVER_WEBHOOK)
-		return err
-	}
-	defer resp.Body.Close()
 
 	return nil
 }
