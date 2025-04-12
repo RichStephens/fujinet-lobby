@@ -26,7 +26,7 @@ func ShowServersMinimised(c *gin.Context) {
 		return
 	}
 
-	ServerSliceClient, _ := txGameServerGetBy(form.Platform, form.Appkey, form.Pagesize, form.PageNumber)
+	ServerSliceClient, _ := txGameServerGetBy(form.Platform, form.Appkey, form.Pagesize, form.Offset)
 
 	if len(ServerSliceClient) == 0 {
 		c.AbortWithStatusJSON(http.StatusNotFound,
@@ -52,12 +52,8 @@ func ShowServersMinimised(c *gin.Context) {
 
 func SerializeToBinaryFormat(c *gin.Context, serverList []GameServerMin, form ShowServersMinimisedFormData) []byte {
 
-	NextPage, _ := txGameServerGetBy(form.Platform, form.Appkey, form.Pagesize, form.PageNumber+1)
-
 	var buf []byte
 	buf = append(buf, byte(len(serverList)))
-	buf = append(buf, byte(form.PageNumber))
-	buf = append(buf, byte(IfElse(len(NextPage) > 0, 1, 0)))
 
 	for _, server := range serverList {
 		buf = server.appendAsBinary(buf)
@@ -67,11 +63,11 @@ func SerializeToBinaryFormat(c *gin.Context, serverList []GameServerMin, form Sh
 }
 
 type ShowServersMinimisedFormData struct {
-	Platform   string // atari, spectrum, etc...
-	Appkey     int    // -1 if none
-	Pagesize   int    // number of entries to return.
-	PageNumber int    // page # of the entries.
-	Bin        int    // 1 if client expects binary response instead of json
+	Platform string // atari, spectrum, etc...
+	Appkey   int    // -1 if none
+	Pagesize int    // number of entries to return.
+	Offset   int    // offset of the entries
+	Bin      int    // 1 if client expects binary response instead of json
 }
 
 func parseShowServersMinimisedForm(c *gin.Context) (output ShowServersMinimisedFormData, err error) {
@@ -88,22 +84,29 @@ func parseShowServersMinimisedForm(c *gin.Context) (output ShowServersMinimisedF
 
 	pagesizeForm := c.Query("pagesize")
 	pagesize := 255 // big number so in case it's not in the form, the select gets all the records
-	page := 0       // if it's not in the form, we defaul to start from the beginning
+	offset := 0
 
-	// if client provides pagesize for pagination, we capture the variables
+	// if client provides pagesize for pagination, capture page/offset
 	if len(pagesizeForm) > 0 {
 		pagesize = Atoi(pagesizeForm, 6)
 
 		pageForm := c.Query("page")
-		page = Atoi(pageForm, 0)
+		if len(pageForm) > 0 {
+			offset = pagesize * Atoi(pageForm, 0)
+		}
+
+		offsetForm := c.Query("offset")
+		if len(offsetForm) > 0 {
+			offset = Atoi(offsetForm, 0)
+		}
 	}
 
 	return ShowServersMinimisedFormData{
-		Platform:   platform,
-		Appkey:     appkey,
-		Pagesize:   pagesize,
-		PageNumber: page,
-		Bin:        IfElse(c.Query("bin") == "1", 1, 0),
+		Platform: platform,
+		Appkey:   appkey,
+		Pagesize: pagesize,
+		Offset:   offset,
+		Bin:      IfElse(c.Query("bin") == "1", 1, 0),
 	}, nil
 
 }
@@ -157,7 +160,7 @@ func ShowServersHtml(c *gin.Context) {
 
 			// Add server if this is the last game client row for the server (reached the end, or next record is a different server/game)
 			if i == len(GameServerClient)-1 || gsc.Server != GameServerClient[i+1].Server || gsc.Game != GameServerClient[i+1].Game {
-				servers += fmt.Sprintf(ServerTemplate, html.EscapeString(gsc.Server), IfElse(gsc.Status == "online", gsc.Curplayers, 0), IfElse(gsc.Status == "online", gsc.Maxplayers, 0), IfElse(gsc.Curplayers > -1, PlayersAvailable, " "))
+				servers += fmt.Sprintf(ServerTemplate, html.EscapeString(gsc.Server), IfElse(gsc.Status == "online", gsc.Curplayers, 0), IfElse(gsc.Status == "online", gsc.Maxplayers, 0), IfElse(gsc.Curplayers > 0, PlayersAvailable, " "))
 			}
 		}
 	}

@@ -38,7 +38,7 @@ var (
 )
 
 const (
-	VERSION   = "5.5.5rc/multiple-web-hooks"
+	VERSION   = "5.5.6"
 	STRINGVER = "fujinet persistent lobby  " + VERSION + "/" + runtime.GOOS + " (c) Roger Sen 2025"
 )
 

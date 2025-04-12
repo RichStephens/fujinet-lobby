@@ -22,12 +22,12 @@
 #define APP_ID     0x01   /* LOBBY    */
 #define KEY_ID     0x00   /* USERNAME */
 
-#define LOBBY_ENDPOINT "N:http://fujinet.online:8080/view"
-//#define LOBBY_ENDPOINT "N:http://localhost:8081/view"
+#define LOBBY_ENDPOINT "N:https://lobby.fujinet.online/view"
+#define LOBBY_QA_ENDPOINT "N:https://qalobby.fujinet.online/view"
+//#define LOBBY_QA_ENDPOINT "N:http://localhost:8080/view"
 
 // Common defines. Undef and redefine for specific platform below
-#define PAGE_SIZE  12
-#define PAGE_SIZE_STR  "12"
+#define MAX_PAGE_SIZE  (BOTTOM_PANEL_Y-3)
 #define SCREEN_WIDTH 40
 #define BOTTOM_PANEL_ROWS 3
 #define PANEL_SPACER "--------"
@@ -93,13 +93,16 @@ char panel_spacer_string[] = {0xA4,0xE4,0xE4,0xB4,0xB4,0xE4,0xE4,0xA4,0};
 #define cputcxy(x,y,c) gotoxy(x,y); cputc(c);
 #define cclearxy(x,y,c) gotoxy(x,y); cclear(c);
 
-//char rx_buf[2048];  
 char username[66];
 
 char buf[128];         // Temporary buffer use
-uint8_t page=0;        // Default to first page of Lobby results
-
-unsigned char selected_server = 0;    // Currently selected server
+char page_offset[128]; // Store offset for each page
+uint8_t offset=0;      // Default to first page of Lobby results
+uint8_t page_size;     // Active page size
+uint8_t qa_mode=0;     // Toggles the lobby endpoint (Prod vs QA)
+uint8_t page=0;        // Current page
+bool more_pages;       // True if should check for more pages
+int8_t selected_server = 0;    // Currently selected server
 
 uint8_t screen_height;
 
@@ -118,9 +121,7 @@ typedef struct { // 189 bytes
 
 typedef struct {
   uint8_t server_count;
-  uint8_t current_page;
-  bool more_pages;
-  ServerDetails servers[PAGE_SIZE];
+  ServerDetails servers[23];
 } LobbyResponse;
 
 LobbyResponse lobby;
@@ -140,7 +141,12 @@ void pause(void) {
 void banner(void) {
   uint8_t j;
   clrscr();
-  cputs("#FUJINET GAME LOBBY");
+  
+  if (qa_mode)
+    cputs("## QA MODE ##");
+  else
+    cputs("#FUJINET GAME LOBBY");
+  
   gotoxy(0,1);
   for(j=0;j<SCREEN_WIDTH/8;j++)
     cputs(PANEL_SPACER);
@@ -161,7 +167,16 @@ void display_servers(int old_server) {
   
     if (prevGame == NULL || strcmp(server->game, prevGame) !=0)
     {
+      
       y+=2;
+      
+      // Exit early if this would roll over the available screen size
+      if (y>page_size) {
+        more_pages = more_pages || (j<=lobby.server_count);
+        lobby.server_count = j;
+        break;
+      }
+
       prevGame = server->game;
 
       if (old_server<0)
@@ -179,10 +194,20 @@ void display_servers(int old_server) {
       }
 
     }
+
+    // Exit early if this would roll over the available screen size
+    if (y>page_size) {
+      more_pages = more_pages || (j<=lobby.server_count);
+      lobby.server_count = j;
+      break;
+    }
+
     y++;
+
+    
     // If just moving the selection, only redraw the old and new server
     // Also temp guard for servers until paging is implemented
-    if (j>PAGE_SIZE || (old_server>=0 && j != old_server && j != selected_server))
+    if (j>page_size || (old_server>=0 && j != old_server && j != selected_server))
       continue;
 
     // Show the selected server in reverse
@@ -226,43 +251,77 @@ void display_servers(int old_server) {
   gotoxy(0,screen_height-1);
   revers(1); cputs("R"); revers(0);
   cputs("efresh list   ");
-  gotoxy(SCREEN_WIDTH-16,screen_height-1);
+
+  gotoxy(SCREEN_WIDTH/2-1,screen_height-1);
+  revers(1); cputs("Q"); revers(0);
+  cputs("A");
+  
+  gotoxy(SCREEN_WIDTH-11,screen_height-1);
   revers(1); cputs("C"); revers(0);
-  cputs("hange your name");
+  cputs("hange name");
 }
 
 void refresh_servers(bool clearScreen) { 
   int16_t api_read_result;
-  uint8_t i;
-  
-  cclearxy(0,BOTTOM_PANEL_Y,BOTTOM_PANEL_LEN);
-  cputsxy(SCREEN_WIDTH/2-12,BOTTOM_PANEL_Y+1,"Refreshing Server List..");
+  uint8_t i, attempt;
 
-  strcpy(buf, LOBBY_ENDPOINT "?bin=1&platform=" PLATFORM  "&pagesize=" PAGE_SIZE_STR "&page=");
-  itoa(page, buf+strlen(buf), 10);
+  for(attempt=0;attempt<2;attempt++) {
+      
+    lobby.server_count=0;
+    page_offset[page]=offset;
+    page_size = MAX_PAGE_SIZE - (qa_mode ? 3 : 0);
+    
+    cclearxy(0,BOTTOM_PANEL_Y,BOTTOM_PANEL_LEN);
+    cputsxy(SCREEN_WIDTH/2-11,BOTTOM_PANEL_Y+1,"Retrieving Servers..");
 
-  network_open(buf, OPEN_MODE_HTTP_GET_H, OPEN_TRANS_NONE);
-  api_read_result = network_read(buf, (uint8_t*)&lobby, sizeof(lobby));
-  network_close(buf);
-  
-  if (clearScreen)
-    banner();
+    strcpy(buf, qa_mode ? LOBBY_QA_ENDPOINT : LOBBY_ENDPOINT);
+    strcat(buf, "?bin=1&platform=" PLATFORM "&pagesize=");
+    itoa(page_size, buf+strlen(buf), 10);
+    strcat(buf, "&offset=");
+    itoa(offset, buf+strlen(buf), 10);
 
-  cputsxy(SCREEN_WIDTH-strlen(username),0, username);
-
-  if (api_read_result<0) {
-    cputs("\r\nCould not query Lobby!\r\nError: ");
-    itoa(api_read_result, buf, 10);
-    cputs(buf);
-  } else if (api_read_result < sizeof(ServerDetails) || lobby.server_count == 0 || lobby.server_count > PAGE_SIZE) {
-    cputs("\r\nNo servers are online.");
-    lobby.server_count = 0;
-  } else {
-    if (selected_server >= lobby.server_count) {
-      selected_server = lobby.server_count-1;
+    
+    network_open(buf, OPEN_MODE_HTTP_GET_H, OPEN_TRANS_NONE);
+    api_read_result = network_read(buf, (uint8_t*)&lobby, sizeof(lobby));
+    network_close(buf);
+    
+    if (clearScreen && (attempt==1 || api_read_result>0)) {
+      banner();
+      if (qa_mode) {
+        cputsxy(0,BOTTOM_PANEL_Y-3,"QA mode is for testing new games");
+        cputsxy(0,BOTTOM_PANEL_Y-2,"Visit: LOBBY.FUJINET.ONLINE/DOCS");
+      }
     }
+
+    cputsxy(SCREEN_WIDTH-strlen(username),0, username);
+
+    if (api_read_result<0) {
+      if (attempt) {
+        cputs("\r\n\r\nCould not query Lobby!\r\nError: ");
+        
+        itoa(api_read_result, buf, 10);
+        cputs(buf);
+      } else {
+         // Possibly reached end of list and didn't read due to 404, reset page to 0
+          page=0;
+          offset=0;
+      }
+    } else if (api_read_result < sizeof(ServerDetails) || lobby.server_count == 0 || lobby.server_count > page_size) {
+      if (attempt) {
+        cputs("\r\nNo servers are online.");
+      }
+      lobby.server_count = 0;
+    } else {
+      if (selected_server >= lobby.server_count) {
+        selected_server = 0;
+      }
+      break;
+    }
+
   }
 
+  // Check for more pages if we received a full page size reponse
+  more_pages = lobby.server_count == page_size;
   display_servers(-1);
 }
 
@@ -389,12 +448,44 @@ void mount() {
 void change_selection(int8_t delta) {
     int old_server = selected_server;
 
-    if (delta < 0 && selected_server == 0)
-      selected_server = lobby.server_count - 1;
-    else
-      selected_server = (selected_server + delta) % lobby.server_count;
+    selected_server += delta;
 
-    display_servers(old_server);
+    if (selected_server <0) {
+      selected_server=0;
+
+      if (page>0) {
+        // Go back a page
+        page--;
+        offset=page_offset[page];
+        refresh_servers(true);
+        return;
+      }  else if (!more_pages) {
+        selected_server=lobby.server_count-1;
+      }
+    }
+    else if (selected_server >= lobby.server_count) {
+      selected_server=0;
+      
+      if (more_pages) {
+        // Move to next page
+        offset+=lobby.server_count;
+        page++;
+        refresh_servers(true);
+        return;
+      } else if (page>0) {
+        // Last page, go back to page 0
+        offset=0;
+        page=0;
+        refresh_servers(true);
+        return;
+      } 
+    }
+
+   
+  // Not switching pages, just update selected server
+  display_servers(old_server);
+        
+    
 }
  
 void event_loop() {
@@ -404,8 +495,13 @@ void event_loop() {
     switch (input.key) {
       case 'c':
       case 'C':
-        banner();
+        banner();  
         get_username();
+        refresh_servers(true);
+        break;
+      case 'q':
+      case 'Q':
+        qa_mode = !qa_mode;
         refresh_servers(true);
         break;
       case 'r':
@@ -417,8 +513,8 @@ void event_loop() {
     
     waitvsync();
     // Arrow keys select the server
-    if ( input.dirY ) {
-      change_selection(input.dirY);
+    if ( input.dirY || input.dirX) {
+      change_selection(input.dirY + input.dirX*30);
     } 
   
   // ifdef hack for Atari, for now
