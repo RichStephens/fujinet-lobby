@@ -522,6 +522,18 @@ void event_loop() {
       change_selection(input.dirY + input.dirX*30);
     } 
     
+    
+    // ifdef hack for Atari, for now
+    #ifdef __ATARI__
+    // Pressing Option mounts the client for the server
+    if (CONSOL_OPTION(GTIA_READ.consol))
+    {
+      mount();
+        // Wait until OPTION is released
+      while (CONSOL_OPTION(GTIA_READ.consol));
+    }
+    #endif  
+
     // Mount if return/enter is pressed
     if (input.trigger) {
       mount();
