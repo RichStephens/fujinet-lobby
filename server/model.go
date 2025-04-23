@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"sort"
@@ -138,7 +137,12 @@ func (s GameServerMin) appendAsBinary(buf []byte) []byte {
 		byte(s.Online),
 		byte(s.Curplayers),
 		byte(s.Maxplayers))
-	buf = binary.LittleEndian.AppendUint16(buf, uint16(s.Pingage))
+
+	// pingage is currently ignored by the client, and may be removed later
+	// If we use it we would need to take Endian into account
+	//buf = binary.LittleEndian.AppendUint16(buf, uint16(s.Pingage))
+	buf = append(buf, byte(0), byte(0))
+
 	return buf
 }
 

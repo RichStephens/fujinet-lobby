@@ -55,6 +55,10 @@ func SerializeToBinaryFormat(c *gin.Context, serverList []GameServerMin, form Sh
 	var buf []byte
 	buf = append(buf, byte(len(serverList)))
 
+	// Reserved for future use
+	buf = append(buf, byte(0))
+	buf = append(buf, byte(0))
+
 	for _, server := range serverList {
 		buf = server.appendAsBinary(buf)
 	}

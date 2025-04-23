@@ -44,8 +44,9 @@ DeviceSlot device_slots[FUJI_DEVICE_SLOT_COUNT];
 
 #ifdef __ATARI__
   #define PLATFORM "atari"
-  #define ACTION_VERB " & hold"
-  #define BOOT_KEY "OPTION"
+  #define ACTION_VERB ", press"
+  #define BOOT_KEY "RETURN"
+  #define BOOT_WORD "play"
   #define BACKGROUND_COLOR 0x90
   #define FOREGROUND_COLOR 0xff
 #endif
@@ -54,12 +55,14 @@ DeviceSlot device_slots[FUJI_DEVICE_SLOT_COUNT];
   #define PLATFORM "apple2"
   #define ACTION_VERB ", press"
   #define BOOT_KEY "RETURN"
+  #define BOOT_WORD "boot"
 #endif
 
 #ifdef _CMOC_VERSION_
 #define ACTION_VERB ", press"
 #define BOOT_KEY "ENTER"
 #define PLATFORM "coco"
+#define BOOT_WORD "play"
 #undef SCREEN_WIDTH
 #define SCREEN_WIDTH 32
 //char panel_spacer_string[] = {0x83,0x93,0xA3,0xB3,0xC3,0xD3,0xE3,0xF3,0};
@@ -78,7 +81,7 @@ char panel_spacer_string[] = {0xA4,0xE4,0xE4,0xB4,0xB4,0xE4,0xE4,0xA4,0};
   #define FOREGROUND_COLOR 1
   #define ACTION_VERB ", press"
   #define BOOT_KEY "RETURN"
-
+  #define BOOT_WORD "play"
 #endif
 
 #ifdef __VIC20__
@@ -121,6 +124,8 @@ typedef struct { // 189 bytes
 
 typedef struct {
   uint8_t server_count;
+  uint8_t reserved_for_future_1;
+  uint8_t reserved_for_future_2;
   ServerDetails servers[23];
 } LobbyResponse;
 
@@ -245,7 +250,7 @@ void display_servers(int old_server) {
     gotoxy(0,BOTTOM_PANEL_Y);
     cputs("Select game" ACTION_VERB " ");
     revers(1); cputs(BOOT_KEY); revers(0);
-    cputs(" to boot\r\n");
+    cputs(" to " BOOT_WORD "\r\n");
   }
 
   gotoxy(0,screen_height-1);
@@ -516,22 +521,11 @@ void event_loop() {
     if ( input.dirY || input.dirX) {
       change_selection(input.dirY + input.dirX*30);
     } 
-  
-  // ifdef hack for Atari, for now
-  #ifdef __ATARI__
-    // Pressing Option mounts the client for the server
-    if (CONSOL_OPTION(GTIA_READ.consol))
-    {
-      mount();
-       // Wait until OPTION is released
-      while (CONSOL_OPTION(GTIA_READ.consol));
-    }
-  #else
+    
+    // Mount if return/enter is pressed
     if (input.trigger) {
       mount();
-    }    
-  #endif
-    
+    }        
   }
 }
 
