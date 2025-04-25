@@ -15,7 +15,7 @@
 
 extern State state;
 
-const char connect_cmd[] = "O\x0c\x02""N2:TCP://fujinet.online:7373/";
+const char connect_cmd[] = "O\x0c\x02""N2:TCP://fujinet.online:8080/";
 extern char _username[32];
 
 void connect(void)
