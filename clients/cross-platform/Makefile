@@ -12,8 +12,10 @@
  
 # Space or comma separated list of cc65 supported target platforms to build for.
 
+FUJINET_LIB_VERSION := 4.7.4
+
 # Supported targets: atari apple2 c64 (lowercase!) 7614
-TARGETS := atari
+TARGETS := atari apple2 c64
  
 # Name of the final, single-file executable.
 # Default: name of the current dir with target name appended

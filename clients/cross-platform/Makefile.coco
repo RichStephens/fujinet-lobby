@@ -20,6 +20,9 @@ DEPS := $(OBJS:.o=.d)
 
 # Required libraries.
 
+FUJINET_LIB_VERSION=4.7.4
+CURRENT_TARGET=coco
+
 # this downloads fujinet-lib and populates FUJINET_LIB_VERSION_DIR and FUJINET_LIB_NAME
 include fujinet-lib.mk
 
