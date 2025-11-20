@@ -17,8 +17,14 @@
 
 // Platform specific implementations
 unsigned char readJoystick();
+
+/// @brief Platform specific initialization
 void initialize();
+
+/// @brief Wait for vertical sync
 void waitvsync();
+
+/// @brief Reboot the system to run mounted disk
 void reboot();
 
 #endif /* PLATFORM_H */

@@ -36,6 +36,8 @@
 #define BOTTOM_PANEL_Y (screen_height-BOTTOM_PANEL_ROWS)
 #define BOTTOM_PANEL_LEN SCREEN_WIDTH*BOTTOM_PANEL_ROWS
 #define MOUNTING "Mounting"
+#define COLD_BOOT reboot()
+
 
 HostSlot host_slots[FUJI_HOST_SLOT_COUNT];
 DeviceSlot device_slots[FUJI_DEVICE_SLOT_COUNT];
@@ -72,6 +74,9 @@ char panel_spacer_string[] = {0xA4,0xE4,0xE4,0xB4,0xB4,0xE4,0xE4,0xA4,0};
 #define BOTTOM_PANEL_ROWS 2
 #undef MOUNTING
 #define MOUNTING "LOADING"
+#define CH_ESC 0x03
+#undef COLD_BOOT
+#define COLD_BOOT coldStart()
 
 #endif
 
@@ -513,7 +518,9 @@ void event_loop() {
       case 'R':
         refresh_servers(false);
         break;
-     
+    case CH_ESC: // Escape / Break - quit to config
+        fuji_set_boot_mode(0);
+        COLD_BOOT;
     }
     
     waitvsync();
@@ -561,7 +568,7 @@ void main(void)
   banner();
   
   register_user();
-  for(i=0;i<30;i++) waitvsync();
+  for(i=0;i<45;i++) waitvsync();
 
   refresh_servers(true);
   event_loop();

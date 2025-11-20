@@ -23,9 +23,9 @@ void initialize() {
 }
 
 void waitvsync() {
-  //static uint16_t i;
-  // Aproximate a jiffy for the timer countdown - untested
-  //for ( i=0;i<628;i++);
+    setTimer(0);
+    
+    while (!getTimer());
 }
 
 /// @brief Invokes the CoCo BASIC RUNM command
