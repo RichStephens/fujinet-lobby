@@ -83,7 +83,7 @@ void readCommonInput() {
     return;
 #endif
     
-  input.key = cgetc();
+  input.key = kbhit();
 
   switch (input.key) {
     case KEY_LEFT_ARROW:
