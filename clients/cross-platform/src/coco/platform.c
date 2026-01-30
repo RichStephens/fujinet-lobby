@@ -14,8 +14,12 @@ extern DeviceSlot device_slots[1];
 #define JOY_LOW_TH   (JOY_CENTER - JOY_HALF)   /* 15 */
 #define JOY_HIGH_TH  (JOY_CENTER + JOY_HALF)   /* 47 */
 
-static bool right_joy_selected = 0;
-static bool left_joy_selected = 0;
+#define JOY_NOT_USED 0
+#define JOY_SELECTING 1
+#define JOY_USING 2
+
+uint8_t right_joy_state = JOY_NOT_USED;
+uint8_t left_joy_state = JOY_NOT_USED;
 
 unsigned char readJoystick() {
     byte value = 0;
@@ -34,33 +38,36 @@ unsigned char readJoystick() {
     // The first time a button is pressed,
     // ONLY register that the joystick is active
     // and return.
-    if (lbtn1 || lbtn2)
+    if (left_joy_state == JOY_NOT_USED && (lbtn1 || lbtn2))
     {
-        if (!left_joy_selected)
-        {
-            left_joy_selected = true;
-            right_joy_selected = false;
-            return 0;
-        }
+        left_joy_state = JOY_SELECTING;
+        right_joy_state = JOY_NOT_USED;
     }
-    else if (rbtn1 || rbtn2)
+    else if (left_joy_state == JOY_SELECTING && !(lbtn1 || lbtn2))
     {
-        if (!right_joy_selected)
-        {
-            right_joy_selected = true;
-            left_joy_selected = false;
-            return 0;
-        }
+        left_joy_state = JOY_USING;
+        right_joy_state = JOY_NOT_USED;
+    }
+
+    if (right_joy_state == JOY_NOT_USED && (rbtn1 || rbtn2))
+    {
+        right_joy_state = JOY_SELECTING;
+        left_joy_state = JOY_NOT_USED;
+    }
+    else if (right_joy_state == JOY_SELECTING && !(rbtn1 || rbtn2))
+    {
+        right_joy_state = JOY_USING;
+        left_joy_state = JOY_NOT_USED;
     }
 
     // Don't read joystick positions until one of the buttons is pressed.
-    if (left_joy_selected || right_joy_selected)
+    if (left_joy_state == JOY_USING || right_joy_state == JOY_USING)
     {
         const byte *joy = readJoystickPositions();
 
        // Toggle back and forth between left and right joystick
        // depending on which one's buttons were last pressed.
-        if (left_joy_selected)
+        if (left_joy_state == JOY_USING) // Using left joystick
         {
             h = joy[JOYSTK_LEFT_HORIZ];
             v = joy[JOYSTK_LEFT_VERT];
@@ -69,7 +76,7 @@ unsigned char readJoystick() {
             if (lbtn2)
                 value |= 32; /* bit 5 = button 2 */
         }
-        else /* right_joy_selected */
+        else // Using right joystick
         {
             h = joy[JOYSTK_RIGHT_HORIZ];
             v = joy[JOYSTK_RIGHT_VERT];
@@ -107,6 +114,9 @@ void initialize() {
     // Colored dashes don't look good on non coco3
     strcpy(panel_spacer_string, "--------");
   }
+
+  left_joy_state = JOY_NOT_USED;
+  right_joy_state = JOY_NOT_USED;
 }
 
 void waitvsync() {
