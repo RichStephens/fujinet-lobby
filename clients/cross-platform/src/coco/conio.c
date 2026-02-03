@@ -8,6 +8,8 @@ bool reverse=0;
 char* cursor=0x400;
 char ss[2] = {0,0};
 
+void cputs (char* s);
+
 unsigned char kbhit (void) { 
   return (unsigned char)inkey();
 }
