@@ -78,12 +78,16 @@ void readCommonInput() {
 
   input.key=0;
 
-#ifndef _CMOC_VERSION_ // until joystick is added, simple solution for cmoc for keyboard input
+  #ifdef _CMOC_VERSION_
+   input.key = kbhit();
+   if (!input.key)
+      return;
+  #else
   if (!kbhit())
     return;
-#endif
     
-  input.key = kbhit();
+  input.key = cgetc();
+  #endif
 
   switch (input.key) {
     case KEY_LEFT_ARROW:
