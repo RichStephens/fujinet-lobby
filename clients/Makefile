@@ -5,9 +5,10 @@ PLATFORMS += apple2
 PLATFORMS += atari
 PLATFORMS += c64
 PLATFORMS += coco
-PLATFORMS += msxrom
-# msdos must be built separately via the make-exp bash script:
-#PLATFORMS += msdos
+PLATFORMS += msdos
+
+# No platform implementation: src/msxrom and include/msxrom do not exist
+#PLATFORMS += msxrom
 
 # You can run 'make <platform>' to build for a specific platform,
 # or 'make <platform>/<target>' for a platform-specific target.
@@ -30,6 +31,13 @@ CFLAGS = -DBUILD_$(PLATFORM_UC)
 # - empty which will use whatever is the latest
 # - undefined, no fujinet-lib will be used
 FUJINET_LIB = 4.10.0
+
+# msdos support only exists in lib-experimental. mekkogx/common.mk sets
+# PLATFORM before including this file, so the library can be chosen per
+# platform instead of having to override FUJINET_LIB on the command line.
+ifeq ($(PLATFORM),msdos)
+  FUJINET_LIB = https://github.com/FozzTexx/fujinet-lib-experimental.git
+endif
 
 # HIRESTXT_LIB can be
 # - a version number such as 0.5.0.2

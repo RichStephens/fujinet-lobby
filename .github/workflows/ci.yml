@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  clients:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - adam
+          - apple2
+          - atari
+          - coco
+          - msdos
+
+          # Builds clean as of this writing, held back pending review.
+          #- c64
+
+          # z88dk cannot parse the library header:
+          #   fujinet-fuji.h:309: Cannot parse function argument 'NewDisk'
+          #- adam_cpm
+
+          # No platform implementation: src/msxrom and include/msxrom
+          # do not exist. Only mekkogx/platforms/msxrom.mk is present.
+          #- msxrom
+
+    container:
+      image: fozztexx/defoogi:1.4.7
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        working-directory: clients
+        run: make ${{ matrix.platform }}/r2r
+
+      - name: Upload artifact for ${{ matrix.platform }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}
+          path: clients/r2r/${{ matrix.platform }}/**
+
+# ---------------------------------------------------------------------------
+# Disabled jobs
+#
+# Each is blocked on something that has to be fixed in the tree first, not on
+# anything CI can solve. Uncomment a job once its blocker below is cleared.
+# ---------------------------------------------------------------------------
+#
+# server - Go build. The only local failure was `sqlite3: not found` inside the
+# container, so this likely just needs sqlite3 present. Untested in CI.
+#
+#  server:
+#    runs-on: ubuntu-latest
+#    container:
+#      image: fozztexx/defoogi:1.4.7
+#    steps:
+#      - uses: actions/checkout@v4
+#      - name: Build
+#        working-directory: server
+#        run: make
+#
+# ---------------------------------------------------------------------------
+# atari-2600, coleco and intv each have a developer's absolute home directory
+# hardcoded in their Makefile, so they build on exactly one machine:
+#
+#   atari-2600  FN2600="/home/wario/Workspace/fujinet-firmware/pico/atari-2600"
+#   coleco      make -C /home/wario/Workspace/fujinet-lib-experimental
+#   intv        intybasic lobby.bas lobby.asm /home/wario/Workspace/IntyBASIC/intybasic/
+#
+# Those paths must be parameterized before any of these can run anywhere else.
+# atari-2600 additionally needs Macroassembler AS and intv needs intybasic;
+# neither is confirmed present in the defoogi image.
+#
+#  atari-2600:
+#    runs-on: ubuntu-latest
+#    container:
+#      image: fozztexx/defoogi:1.4.7
+#    steps:
+#      - uses: actions/checkout@v4
+#      - name: Build
+#        working-directory: atari-2600
+#        run: make
+#
+#  coleco:
+#    runs-on: ubuntu-latest
+#    container:
+#      image: fozztexx/defoogi:1.4.7
+#    steps:
+#      - uses: actions/checkout@v4
+#      - name: Build
+#        working-directory: coleco
+#        run: make
+#
+#  intv:
+#    runs-on: ubuntu-latest
+#    container:
+#      image: fozztexx/defoogi:1.4.7
+#    steps:
+#      - uses: actions/checkout@v4
+#      - name: Build
+#        working-directory: intv
+#        run: make
