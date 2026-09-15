@@ -16,7 +16,7 @@ PLATFORMS += msdos
 #   make coco        → build for coco
 #   make apple2/disk → build the 'disk' target for apple2
 
-# SRC_DIRS may use the literal %PLATFORM% token.
+# SRC_DIRS and INCLUDE_DIRS may use the literal %PLATFORM% token.
 # It expands to the chosen PLATFORM plus any of its combos.
 SRC_DIRS = src src/%PLATFORM%
 INCLUDE_DIRS = include include/%PLATFORM%
